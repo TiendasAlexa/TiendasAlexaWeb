@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique de Calzado | Alexa</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@200;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --p-morado: #a855f7;
+            --p-morado-dark: #7e22ce;
+            --p-negro: #050505;
+            --p-gris-card: #111111;
+            --f-serif: 'Cormorant Garamond', serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: radial-gradient(circle at top, #1a1a1a 0%, var(--p-negro) 100%);
+            color: #f0f0f0; 
+            font-family: 'Montserrat', sans-serif; 
+            padding-top: 85px; 
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- NAVEGACIÓN --- */
+        nav {
+            position: fixed; top: 0; width: 100%; height: 75px;
+            background: rgba(5, 5, 5, 0.7); backdrop-filter: blur(25px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 8%; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .nav-logo { 
+            font-family: var(--f-serif); font-size: 1.8rem; letter-spacing: 8px; 
+            text-decoration: none; color: white; font-weight: 300;
+        }
+        
+        .cart-icon { position: relative; cursor: pointer; transition: transform 0.3s var(--ease); }
+        .cart-icon:active { transform: scale(0.9); }
+        .cart-count {
+            position: absolute; top: -10px; right: -12px;
+            background: var(--p-morado); color: white;
+            font-size: 0.6rem; width: 18px; height: 18px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* --- GRID DE PRODUCTOS --- */
+        .products-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 20px; padding: 20px; max-width: 1100px; margin: 0 auto;
+        }
+
+        .product-card {
+            background: linear-gradient(145deg, #151515, #0a0a0a);
+            padding: 10px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            opacity: 0; transform: translateY(40px);
+            transition: all 1s var(--ease);
+            display: flex; flex-direction: column;
+        }
+        .product-card.reveal-visible { opacity: 1; transform: translateY(0); }
+        .product-card:hover { border-color: rgba(168, 85, 247, 0.4); }
+
+        .img-box { 
+            width: 100%; aspect-ratio: 1/1; background: #000; 
+            margin-bottom: 15px; overflow: hidden; border-radius: 10px;
+            position: relative;
+        }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: 1.2s var(--ease); }
+        .product-card:hover img { transform: scale(1.1); opacity: 1; }
+
+        .product-info { flex-grow: 1; text-align: center; }
+        .product-info h3 { 
+            font-family: var(--f-serif); font-size: 1rem; font-weight: 400; 
+            height: 2.4em; overflow: hidden; color: #fff; margin-bottom: 5px;
+            line-height: 1.2; letter-spacing: 0.5px;
+        }
+        .product-info p { color: var(--p-morado); font-size: 1rem; font-weight: 600; margin-bottom: 15px; letter-spacing: 1px; }
+
+        /* --- ACCIONES --- */
+        .action-area { height: 48px; position: relative; border-radius: 8px; overflow: hidden; margin-top: auto; }
+        .btn-want {
+            width: 100%; height: 100%; background: transparent;
+            border: 1px solid rgba(168, 85, 247, 0.4); color: white;
+            font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+            transition: 0.3s; font-family: 'Montserrat', sans-serif;
+        }
+        .btn-want:hover { background: var(--p-morado); border-color: var(--p-morado); box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3); }
+
+        .qty-controls {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(90deg, var(--p-morado-dark), var(--p-morado)); 
+            transform: translateY(105%);
+            transition: 0.5s var(--ease); padding: 0 15px;
+        }
+        .qty-controls.active { transform: translateY(0); }
+        .qty-btn { background: none; border: none; color: white; font-size: 1.4rem; width: 40px; cursor: pointer; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+        /* --- LIGHTBOX --- */
+        .lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+            backdrop-filter: blur(15px); z-index: 3000;
+            display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.4s;
+        }
+        .lightbox.active { display: flex; opacity: 1; }
+        .lightbox img { max-width: 85%; max-height: 75vh; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+
+        /* --- BOTÓN EXTRA (TREINTA) --- */
+        .extra-section { text-align: center; padding: 80px 20px 120px; }
+        .btn-extra {
+            display: inline-block; padding: 20px 35px;
+            border: 1px solid rgba(255,255,255,0.1); color: #aaa;
+            text-decoration: none; font-size: 0.75rem; letter-spacing: 4px;
+            transition: 0.5s; border-radius: 50px; text-transform: uppercase;
+        }
+        .btn-extra:hover { border-color: #fff; color: #fff; letter-spacing: 6px; }
+
+        /* --- FLOATING CHECKOUT PILL --- */
+        .checkout-bar {
+            position: fixed; bottom: 25px; left: 50%; transform: translate(-50%, 150%);
+            width: 90%; max-width: 500px;
+            background: rgba(255, 255, 255, 0.95); color: #000; 
+            padding: 12px 25px; border-radius: 100px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.6s var(--ease); z-index: 1001;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .checkout-bar.active { transform: translate(-50%, 0); }
+        .btn-confirm {
+            background: var(--p-negro); color: white; border: none;
+            padding: 12px 25px; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase; border-radius: 50px;
+            transition: 0.3s; cursor: pointer;
+        }
+        .btn-confirm:hover { transform: scale(1.05); background: var(--p-morado); }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px); z-index: 2000;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content { 
+            background: #111; width: 100%; max-width: 400px; padding: 40px 30px; 
+            border: 1px solid rgba(168, 85, 247, 0.3); text-align: center; border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .resumen-texto { 
+            background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; 
+            margin: 25px 0; text-align: left; font-size: 0.85rem; 
+            border-left: 3px solid var(--p-morado); max-height: 200px; overflow-y: auto; 
+            line-height: 1.8; color: #ccc;
+        }
+        .asesora-btn { 
+            width: 100%; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.75rem; 
+            letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; gap: 12px; transition: 0.3s; 
+        }
+        .asesora-btn:hover { background: rgba(168, 85, 247, 0.15); border-color: var(--p-morado); transform: translateY(-2px); }
+
+        @media (max-width: 480px) {
+            .nav-logo { font-size: 1.4rem; letter-spacing: 5px; }
+            .products-grid { gap: 15px; padding: 15px; }
+            .product-info h3 { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="redes.html" class="nav-logo">ALEXA</a>
+        <div class="cart-icon" onclick="openCheckout()">
+            <i class="fas fa-shopping-bag"></i>
+            <div class="cart-count" id="cartCount">0</div>
+        </div>
+    </nav>
+
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <img id="lightboxImg" src="">
+    </div>
+
+    <main class="products-grid" id="grid"></main>
+
+    <section class="extra-section reveal">
+        <p style="font-size: 0.55rem; opacity: 0.3; letter-spacing: 5px; margin-bottom: 25px; text-transform: uppercase;">Experiencia Completa</p>
+        <a href="https://menu.treinta.shop/menu/tiendasalexa-e627a5" target="_blank" class="btn-extra">
+            Descubrir en Treinta
+        </a>
+    </section>
+
+    <div class="checkout-bar" id="checkoutBar">
+        <div>
+            <span style="font-size:0.55rem; text-transform:uppercase; display:block; opacity:0.5; font-weight: 600;">Total Estimado</span>
+            <strong id="totalPrice" style="font-size: 1.2rem;">L. 0</strong>
+        </div>
+        <button class="btn-confirm" onclick="openCheckout()">Confirmar</button>
+    </div>
+
+    <div class="modal-overlay" id="modalCheckout">
+        <div class="modal-content">
+            <h3 style="font-family: var(--f-serif); font-size: 1.8rem; font-weight: 300; letter-spacing: 2px;">Tu Selección</h3>
+            <p style="font-size: 0.55rem; opacity: 0.5; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">Alexa Concierge Service</p>
+            
+            <div class="resumen-texto" id="resumenLista"></div>
+            
+            <p style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 25px; letter-spacing: 1px;">Indique su talla al contactar a la asesora</p>
+            
+            <button class="asesora-btn" onclick="sendWhatsApp('50497320939')"><i class="fab fa-whatsapp" style="color:#25d366; font-size: 1.2rem;"></i> Contactar Asesora I</button>
+            <button class="asesora-btn" onclick="sendWhatsApp('50499226664')"><i class="fab fa-whatsapp" style="color:#25d366; font-size: 1.2rem;"></i> Contactar Asesora II</button>
+            
+            <button onclick="closeCheckout()" style="background:none; border:none; color:white; font-size:0.6rem; margin-top:20px; opacity:0.4; cursor:pointer; text-transform: uppercase; letter-spacing: 2px;">Volver a la Galería</button>
+        </div>
+    </div>
+
+    <script>
+        const zapatos = [
+            { id: 201, name: "Tenis Levi's Talla 9", price: 1200, img: "Photos/levis.png" },
+            { id: 202, name: "Tenis Madden NYC", price: 800, img: "Photos/docker.png" },
+            { id: 203, name: "Tenis Levi's Talla 10", price: 1200, img: "Photos/levi.png" },
+            { id: 204, name: "Tenis Puma Clyde x Staple, Talla 8 y 1/2", price: 1500, img: "Photos/puma.png" },
+            { id: 205, name: "Columbia Granite Trail Mid, Talla 5", price: 1400, img: "Photos/columbia.png" },
+            { id: 206, name: "Tenis Untld, Talla 10", price: 1800, img: "Photos/untld.png" },
+        ];
+
+        let cart = JSON.parse(localStorage.getItem('alexa_cart')) || {};
+
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = zapatos.map(z => {
+                const q = cart[z.id] || 0;
+                return `
+                <div class="product-card reveal">
+                    <div class="img-box" onclick="openLightbox('${z.img}')"><img src="${z.img}" alt="${z.name}"></div>
+                    <div class="product-info">
+                        <h3>${z.name.toUpperCase()}</h3>
+                        <p>L. ${z.price.toLocaleString()}</p>
+                    </div>
+                    <div class="action-area">
+                        <button class="btn-want" style="display: ${q > 0 ? 'none' : 'block'}" onclick="updateQty(${z.id}, 1)">Seleccionar</button>
+                        <div class="qty-controls ${q > 0 ? 'active' : ''}">
+                            <button class="qty-btn" onclick="updateQty(${z.id}, -1)"><i class="fas fa-minus" style="font-size:0.7rem"></i></button>
+                            <span style="font-weight:600; font-size:0.9rem">${q}</span>
+                            <button class="qty-btn" onclick="updateQty(${z.id}, 1)"><i class="fas fa-plus" style="font-size:0.7rem"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            sync();
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+
+        function updateQty(id, change) {
+            cart[id] = (cart[id] || 0) + change;
+            if (cart[id] <= 0) delete cart[id];
+            localStorage.setItem('alexa_cart', JSON.stringify(cart));
+            render();
+        }
+
+        function sync() {
+            let total = 0, count = 0;
+            zapatos.forEach(z => { if (cart[z.id]) { total += z.price * cart[z.id]; count += cart[z.id]; } });
+            document.getElementById('cartCount').innerText = count;
+            document.getElementById('totalPrice').innerText = `L. ${total.toLocaleString()}`;
+            document.getElementById('checkoutBar').classList.toggle('active', count > 0);
+        }
+
+        function openLightbox(src) { 
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lightboxImg').src = src; 
+            lb.style.display = 'flex';
+            setTimeout(() => lb.classList.add('active'), 10);
+        }
+
+        function closeLightbox() { 
+            const lb = document.getElementById('lightbox');
+            lb.classList.remove('active');
+            setTimeout(() => lb.style.display = 'none', 400);
+        }
+
+        function openCheckout() {
+            let items = zapatos.filter(z => cart[z.id]).map(z => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <span><b style="color:var(--p-morado)">${cart[z.id]}x</b> ${z.name}</span>
+                    <span style="font-weight:600">L. ${(z.price * cart[z.id]).toLocaleString()}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('resumenLista').innerHTML = items || "No has seleccionado modelos aún.";
+            document.getElementById('modalCheckout').classList.add('active');
+        }
+
+        function closeCheckout() { document.getElementById('modalCheckout').classList.remove('active'); }
+
+        function sendWhatsApp(phone) {
+            let total = 0, msg = "✨ *ALEXA | Pedido Calzado* ✨\n──────────────────\n";
+            zapatos.forEach(z => { 
+                if (cart[z.id]) { 
+                    msg += `👟 *${cart[z.id]}x* ${z.name.toUpperCase()}\n      _L. ${(z.price * cart[z.id]).toLocaleString()}_\n\n`; 
+                    total += z.price * cart[z.id]; 
+                } 
+            });
+            msg += `──────────────────\n*TOTAL: L. ${total.toLocaleString()}*\n──────────────────\n\n_¿Tienen disponibles? ¿Qué tallas manejan?_`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+        }
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('reveal-visible'); });
+        }, { threshold: 0.1 });
+
+        render();
+    </script>
+</body>
+</html>
